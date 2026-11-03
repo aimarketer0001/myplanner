@@ -644,6 +644,26 @@
         color: var(--color-text-main);
       }
 
+      /* Category Select Input in Form */
+      .category-input-select {
+        padding: 5px 10px;
+        font-size: 13px;
+        font-weight: 600;
+        min-height: 32px;
+        border: 1.5px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface);
+        color: var(--color-text-main);
+        outline: none;
+        cursor: pointer;
+        font-family: inherit;
+        transition: border-color 0.12s ease;
+      }
+
+      .category-input-select:focus {
+        border-color: var(--color-border-focus);
+      }
+
       /* 4. Task List Section (업무 목록) */
       .list-section {
         background: var(--color-surface);
@@ -749,6 +769,38 @@
 
       .filter-tab.active .material-symbols-rounded {
         font-variation-settings: 'FILL' 1;
+      }
+
+      .controls-right-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .category-filter-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .category-filter-select {
+        padding: 9px 14px;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--color-text-main);
+        background: var(--color-surface);
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius-md);
+        outline: none;
+        cursor: pointer;
+        min-height: 42px;
+        font-family: inherit;
+        transition: border-color 0.12s ease;
+      }
+
+      .category-filter-select:focus {
+        border-color: var(--color-border-focus);
       }
 
       .sort-select {
@@ -901,6 +953,42 @@
         gap: 8px 12px;
         font-size: 13.5px;
         flex-wrap: wrap;
+      }
+
+      /* Category Badge */
+      .category-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--radius-sm);
+        white-space: nowrap;
+        flex-shrink: 0;
+        letter-spacing: -0.01em;
+      }
+
+      .category-badge.incubator {
+        background: #f5f3ff;
+        color: #6d28d9;
+        border: 1.5px solid #ddd6fe;
+      }
+
+      .category-badge.incubator .material-symbols-rounded {
+        font-size: 15px;
+        color: #7c3aed;
+      }
+
+      .category-badge.general {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1.5px solid #cbd5e1;
+      }
+
+      .category-badge.general .material-symbols-rounded {
+        font-size: 15px;
+        color: #64748b;
       }
 
       /* Priority Tag with Material Icon AND Korean Text */
@@ -1452,6 +1540,18 @@
           gap: 12px;
         }
 
+        .controls-right-group {
+          width: 100%;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+
+        .category-filter-wrap {
+          width: 100%;
+        }
+
+        .category-filter-select,
         .sort-select {
           width: 100%;
         }
@@ -1564,8 +1664,17 @@
             </div>
           </div>
 
-          <!-- Row 2: Priority & Due Date Options Toolbar -->
+          <!-- Row 2: Category, Priority & Due Date Options Toolbar -->
           <div class="compact-options-row">
+            <!-- Category Selector -->
+            <div class="compact-option-item">
+              <span class="compact-label">구분:</span>
+              <select id="taskCategory" class="category-input-select" aria-label="업무 구분">
+                <option value="창업보육센터 지원">🏢 창업보육센터 지원</option>
+                <option value="일반" selected>📌 일반</option>
+              </select>
+            </div>
+
             <!-- Priority Selector -->
             <div class="compact-option-item">
               <span class="compact-label">우선순위:</span>
@@ -1677,14 +1786,25 @@
             </button>
           </div>
 
-          <div>
-            <label for="sortSelector" class="sr-only">정렬 방식</label>
-            <select id="sortSelector" class="sort-select">
-              <option value="created_desc">최신 등록순</option>
-              <option value="created_asc">오래된 등록순</option>
-              <option value="due_asc">마감일 빠른순</option>
-              <option value="priority_desc">우선순위 높은순</option>
-            </select>
+          <div class="controls-right-group">
+            <div class="category-filter-wrap">
+              <label for="categoryFilter" class="sr-only">업무 구분 필터</label>
+              <select id="categoryFilter" class="category-filter-select" aria-label="업무 구분 필터">
+                <option value="all" selected>전체 구분 (모두 보기)</option>
+                <option value="창업보육센터 지원">🏢 창업보육센터 지원</option>
+                <option value="일반">📌 일반</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="sortSelector" class="sr-only">정렬 방식</label>
+              <select id="sortSelector" class="sort-select">
+                <option value="created_desc">최신 등록순</option>
+                <option value="created_asc">오래된 등록순</option>
+                <option value="due_asc">마감일 빠른순</option>
+                <option value="priority_desc">우선순위 높은순</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1798,8 +1918,10 @@
 
         // STORAGE_KEY strictly maintained to preserve user's existing data!
         const STORAGE_KEY = 'my_work_planner_tasks_v1';
+        const SEED_KEY = 'my_work_planner_incubator_seeded_v1';
         let tasks = [];
         let currentFilter = 'all';
+        let currentCategoryFilter = 'all';
         let currentSort = 'created_desc';
         let selectedPriority = 'medium';
         let activeModalTaskId = null;
@@ -1807,6 +1929,7 @@
         // DOM Elements
         const taskForm = document.getElementById('taskForm');
         const taskTitleInput = document.getElementById('taskTitle');
+        const taskCategoryInput = document.getElementById('taskCategory');
         const titleErrorHint = document.getElementById('titleErrorHint');
         const taskDueDateInput = document.getElementById('taskDueDate');
         const priorityButtons = document.querySelectorAll('.priority-btn');
@@ -1817,6 +1940,7 @@
         const saveErrorBanner = document.getElementById('saveErrorBanner');
         const todayIndicator = document.getElementById('todayIndicator');
         const sortSelector = document.getElementById('sortSelector');
+        const categoryFilter = document.getElementById('categoryFilter');
         const filterTabs = document.querySelectorAll('.filter-tab');
 
         const btnDateToday = document.getElementById('btnDateToday');
@@ -1913,11 +2037,286 @@
         };
 
         /**
+         * Initial Seed Checklist Tasks for "창업보육센터 지원"
+         * (동부여성발전센터 창업센터 2027 신규입주 지원 체크리스트)
+         * 기준일: 2026.11.3.(화) / 접수마감: 2026.11.8.(일) 24:00
+         */
+        const INITIAL_INCUBATOR_TASKS = [
+          // 1. 확정 사항 및 자격 요건
+          {
+            id: 'incubator_seed_1',
+            title: '[확정] 지원 대상 사업 Magentify(마젠티파이) 명칭 통일 및 예비창업자 신청 확정',
+            priority: 'medium',
+            dueDate: '2026-11-03',
+            completed: true,
+            category: '창업보육센터 지원',
+            createdAt: 1730600000000
+          },
+          {
+            id: 'incubator_seed_2',
+            title: '[확정] 자기자금 1,500만원(운전 1,300만 + 시설 200만) 자금조달계획 반영 확정',
+            priority: 'medium',
+            dueDate: '2026-11-03',
+            completed: true,
+            category: '창업보육센터 지원',
+            createdAt: 1730600010000
+          },
+          {
+            id: 'incubator_seed_3',
+            title: '[서류 준비] 서울 거주 증빙용 주민등록등본 1부 발급 준비 (성동구 거주)',
+            priority: 'medium',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600020000
+          },
+          // 2. 전체 추진 일정 (11/3 ~ 11/8)
+          {
+            id: 'incubator_seed_4',
+            title: '[일정] 11/3(화) 자료 수집, 사업계획서 초안, PPT 초안, HWP 1차 작성',
+            priority: 'high',
+            dueDate: '2026-11-03',
+            completed: true,
+            category: '창업보육센터 지원',
+            createdAt: 1730600030000
+          },
+          {
+            id: 'incubator_seed_5',
+            title: '[일정] 11/4(수) HWP 남은 항목(사업전략 등) 입력 및 센터 유선 문의',
+            priority: 'high',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600040000
+          },
+          {
+            id: 'incubator_seed_6',
+            title: '[일정] 11/5(목) HWP 서명·주민번호 입력 및 PPT 이미지·비율 보정',
+            priority: 'high',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600050000
+          },
+          {
+            id: 'incubator_seed_7',
+            title: '[일정] 11/6(금) 발표 3분 리허설, 전체 최종 검토, PDF 변환 여부 결정',
+            priority: 'high',
+            dueDate: '2026-11-06',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600060000
+          },
+          {
+            id: 'incubator_seed_8',
+            title: '[일정] 11/7(토) 이메일 최종 제출 (여유일 접수: dongbubiz@seoulwomanup.or.kr)',
+            priority: 'high',
+            dueDate: '2026-11-07',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600070000
+          },
+          {
+            id: 'incubator_seed_9',
+            title: '[일정] 11/8(일) 접수 최종 마감 확인 (24:00 마감)',
+            priority: 'high',
+            dueDate: '2026-11-08',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600080000
+          },
+          // 3. 센터 문의 (전화 02-460-2325)
+          {
+            id: 'incubator_seed_10',
+            title: '[센터 문의] 주민번호 포함 서류 이메일 전송 시 PDF 암호화 등 보안 지침 확인 (02-460-2325)',
+            priority: 'high',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600090000
+          },
+          {
+            id: 'incubator_seed_11',
+            title: '[센터 문의] 서명 이미지(PNG) 삽입본 및 스캔본 인정 여부 확인',
+            priority: 'high',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600100000
+          },
+          {
+            id: 'incubator_seed_12',
+            title: '[센터 문의] 제출 파일 형식(HWP/PDF) 및 PPT 첨부 용량 제한 확인',
+            priority: 'medium',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600110000
+          },
+          {
+            id: 'incubator_seed_13',
+            title: '[센터 문의] 2차 면접 일정/방식 및 발표(3분) 질의응답 진행 방식 문의',
+            priority: 'medium',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600120000
+          },
+          {
+            id: 'incubator_seed_14',
+            title: '[센터 문의] 주민등록등본 등 자격 증빙 서류 별도 첨부 제출 여부 확인',
+            priority: 'medium',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600130000
+          },
+          // 4. HWP 신청서 작업
+          {
+            id: 'incubator_seed_15',
+            title: '[HWP 신청서] 생년월일 및 주민등록번호(개인정보 동의서) 기입',
+            priority: 'high',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600140000
+          },
+          {
+            id: 'incubator_seed_16',
+            title: '[HWP 신청서] 신청일 일자 기재 및 신청인 \'(인)\' 자리에 서명 이미지(Sunny ______.png) 삽입',
+            priority: 'high',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600150000
+          },
+          {
+            id: 'incubator_seed_17',
+            title: '[HWP 신청서] 개인정보 수집·이용 동의서 날짜 및 서명 이미지 삽입',
+            priority: 'high',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600160000
+          },
+          {
+            id: 'incubator_seed_18',
+            title: '[HWP 신청서] 창업 예정일(2027. 1. 1.) 입력 및 이메일 칸 라벨 배치 점검',
+            priority: 'medium',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600170000
+          },
+          {
+            id: 'incubator_seed_19',
+            title: '[HWP 신청서] 3. 사업전략(시장현황, 핵심전략, 목표고객, 사업화, 홍보마케팅, 유통) 초안 붙여넣기',
+            priority: 'high',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600180000
+          },
+          {
+            id: 'incubator_seed_20',
+            title: '[HWP 신청서] 5. 향후 연도별 주요사업추진전략 (2027/2028/2029 연도별 목표 표) 작성',
+            priority: 'high',
+            dueDate: '2026-11-04',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600190000
+          },
+          {
+            id: 'incubator_seed_21',
+            title: '[HWP 신청서] 사업아이템 이미지 칸 화면 캡처(magentify_hero.png 및 서비스 로고) 삽입',
+            priority: 'medium',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600200000
+          },
+          {
+            id: 'incubator_seed_22',
+            title: '[HWP 신청서] 안내문구(\'※ 작성 후 삭제\') 전수 삭제 및 불필요한 붙임 페이지(1,2,3,5,6,8) 정리',
+            priority: 'medium',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600210000
+          },
+          // 5. 발표 PPT 작업
+          {
+            id: 'incubator_seed_23',
+            title: '[발표 PPT] 슬라이드 3 스크린샷 가로세로 비율 왜곡 점검 및 서비스 화면 이미지 교체·조정',
+            priority: 'medium',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600220000
+          },
+          {
+            id: 'incubator_seed_24',
+            title: '[발표 PPT] 슬라이드 1, 7 로고 투명 배경 처리 또는 어두운 배경색 일치화',
+            priority: 'medium',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600230000
+          },
+          {
+            id: 'incubator_seed_25',
+            title: '[발표 PPT] 글자 넘침/겹침 시각 검증 및 매출·고객수(2027 목표치) 사업계획서와 일치 확인',
+            priority: 'high',
+            dueDate: '2026-11-05',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600240000
+          },
+          {
+            id: 'incubator_seed_26',
+            title: '[발표 PPT] 발표자 노트 대본 기준 3분 스피치 리허설 (시간 초과 감점 방지)',
+            priority: 'high',
+            dueDate: '2026-11-06',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600250000
+          },
+          // 6. 최종 점검 및 제출
+          {
+            id: 'incubator_seed_27',
+            title: '[제출 점검] 신청서 체크란(■)과 실제 첨부 파일 일치 및 최종 오탈자 전수 점검',
+            priority: 'high',
+            dueDate: '2026-11-07',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600260000
+          },
+          {
+            id: 'incubator_seed_28',
+            title: '[최종 제출] 메일 발송 (제목: 2027 창업보육센터 입주신청서_전선희 / 수신: dongbubiz@seoulwomanup.or.kr / 첨부: 신청서, PPT)',
+            priority: 'high',
+            dueDate: '2026-11-07',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600270000
+          },
+          {
+            id: 'incubator_seed_29',
+            title: '[제출 확인] 메일 발송 직후 센터(02-460-2325) 유선 수신 확인',
+            priority: 'high',
+            dueDate: '2026-11-07',
+            completed: false,
+            category: '창업보육센터 지원',
+            createdAt: 1730600280000
+          }
+        ];
+
+        /**
          * Generate Google Calendar Template Event Link for All-Day Event
          * - Base URL: https://calendar.google.com/calendar/r/eventedit
          * - action=TEMPLATE
          * - text: 업무명
-         * - details: 우선순위 + 설명
+         * - details: 구분 + 우선순위 + 설명
          * - dates: YYYYMMDD/YYYYMMDD (종료일은 마감일 다음 날, 월말/연말/윤년 정확히 계산)
          * - URLSearchParams used for proper encoding of Korean, spaces, & and symbols
          */
@@ -1943,10 +2342,11 @@
           const nextDay = nextDate.getDate();
           const endStr = `${String(nextYear).padStart(4, '0')}${String(nextMonth).padStart(2, '0')}${String(nextDay).padStart(2, '0')}`;
 
+          const categoryLabel = task.category || '일반';
           const priorityObj = PRIORITY_INFO[task.priority] || PRIORITY_INFO.medium;
           const priorityLabel = priorityObj.label;
 
-          const detailsText = `우선순위: ${priorityLabel}\n\n[내 업무 플래너에서 추가한 일정]\n※ Google 캘린더에서 내용을 확인 후 저장하세요. 이후 플래너에서의 수정 및 완료 상태는 캘린더에 자동 동기화되지 않습니다.`;
+          const detailsText = `구분: ${categoryLabel}\n우선순위: ${priorityLabel}\n\n[내 업무 플래너에서 추가한 일정]\n※ Google 캘린더에서 내용을 확인 후 저장하세요. 이후 플래너에서의 수정 및 완료 상태는 캘린더에 자동 동기화되지 않습니다.`;
 
           const params = new URLSearchParams({
             action: 'TEMPLATE',
@@ -1975,20 +2375,39 @@
         }
 
         /**
-         * Load tasks from localStorage (Preserve existing user data)
+         * Load tasks from localStorage (Preserve existing user data & seed checklist)
          */
         function loadTasksFromStorage() {
           try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) {
-              tasks = [];
-              return;
-            }
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              tasks = parsed.filter(item => item && typeof item === 'object' && item.id);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) {
+                tasks = parsed.filter(item => item && typeof item === 'object' && item.id);
+                // Ensure existing tasks have a category
+                tasks.forEach(item => {
+                  if (!item.category) {
+                    item.category = '일반';
+                  }
+                });
+              } else {
+                tasks = [];
+              }
             } else {
               tasks = [];
+            }
+
+            // Seed incubator checklist tasks if not yet seeded
+            const seeded = localStorage.getItem(SEED_KEY);
+            if (!seeded) {
+              const existingIds = new Set(tasks.map(t => t.id));
+              const itemsToAdd = INITIAL_INCUBATOR_TASKS.filter(t => !existingIds.has(t.id));
+              if (itemsToAdd.length > 0) {
+                // Prepend incubator checklist tasks
+                tasks = [...itemsToAdd, ...tasks];
+                saveTasksToStorage();
+              }
+              localStorage.setItem(SEED_KEY, 'true');
             }
           } catch (e) {
             console.error('Failed to parse localStorage tasks:', e);
@@ -2020,7 +2439,11 @@
           let overdueCount = 0;
           let completedCount = 0;
 
-          tasks.forEach(task => {
+          const targetTasks = currentCategoryFilter === 'all'
+            ? tasks
+            : tasks.filter(t => t.category === currentCategoryFilter);
+
+          targetTasks.forEach(task => {
             if (task.completed) {
               completedCount++;
             } else {
@@ -2034,7 +2457,7 @@
             }
           });
 
-          const totalCount = tasks.length;
+          const totalCount = targetTasks.length;
 
           statTotal.textContent = totalCount;
           statPending.textContent = pendingCount;
@@ -2055,6 +2478,12 @@
         function getFilteredAndSortedTasks(todayStr) {
           // 1. Filter
           let filtered = tasks.filter(task => {
+            // Category filter
+            if (currentCategoryFilter !== 'all' && task.category !== currentCategoryFilter) {
+              return false;
+            }
+
+            // Status filter
             const dateStatus = evaluateTaskDateStatus(task, todayStr);
             if (currentFilter === 'pending') return !task.completed;
             if (currentFilter === 'completed') return task.completed;
@@ -2154,6 +2583,9 @@
             if (tasks.length === 0) {
               emptyTitle.textContent = '등록된 업무가 없습니다';
               emptyDesc.textContent = '상단 \'새 업무 등록\' 영역에서 새로운 업무를 등록하고 마감 기한과 우선순위를 편리하게 관리해 보세요.';
+            } else if (currentCategoryFilter !== 'all') {
+              emptyTitle.textContent = `'${currentCategoryFilter}' 구분의 업무가 없습니다`;
+              emptyDesc.textContent = '선택하신 구분에 등록된 업무가 없거나 필터 조건에 부합하는 항목이 없습니다.';
             } else {
               emptyTitle.textContent = '해당 조건의 업무가 없습니다';
               emptyDesc.textContent = '선택하신 필터 조건에 부합하는 업무 항목이 없습니다.';
@@ -2298,6 +2730,10 @@
 
                 <div class="task-footer-wrap">
                   <div class="task-meta">
+                    <span class="category-badge ${task.category === '창업보육센터 지원' ? 'incubator' : 'general'}">
+                      <span class="material-symbols-rounded">${task.category === '창업보육센터 지원' ? 'business_center' : 'label'}</span>
+                      ${escapeHtml(task.category || '일반')}
+                    </span>
                     <span class="priority-tag ${priority.cls}">
                       <span class="material-symbols-rounded">${priority.icon}</span>
                       ${priority.label}
@@ -2356,12 +2792,14 @@
           titleErrorHint.classList.remove('visible');
 
           const dueDate = taskDueDateInput.value || '';
+          const category = taskCategoryInput ? (taskCategoryInput.value || '일반') : '일반';
 
           const newTask = {
             id: generateUniqueId(),
             title: trimmedTitle,
             priority: selectedPriority, // 'high' | 'medium' | 'low'
             dueDate: dueDate,           // 'YYYY-MM-DD' or ''
+            category: category,         // '창업보육센터 지원' | '일반'
             completed: false,
             createdAt: Date.now()
           };
@@ -2374,6 +2812,9 @@
             // Reset input values
             taskTitleInput.value = '';
             taskDueDateInput.value = '';
+            if (taskCategoryInput) {
+              taskCategoryInput.value = '일반';
+            }
             
             // Reset priority to default 'medium' (보통)
             setPriority('medium');
@@ -2534,6 +2975,14 @@
           currentSort = this.value;
           render();
         });
+
+        // Category filter change
+        if (categoryFilter) {
+          categoryFilter.addEventListener('change', function () {
+            currentCategoryFilter = this.value;
+            render();
+          });
+        }
 
         // Initialize App
         updateTodayIndicator();
